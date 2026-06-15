@@ -1,9 +1,4 @@
-# ============================================
-# Render 一键部署配置
-# ============================================
-
 services:
-  # ---- 后端 API ----
   - type: web
     name: civil-interview-backend
     runtime: node
@@ -21,25 +16,21 @@ services:
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: CLIENT_URL
-        fromService:
-          name: civil-interview-frontend
-          type: web
-          property: url
+        value: "*"
     disk:
       name: sqlite-data
       mountPath: /opt/render/project/src/backend/data
       sizeGB: 1
     healthCheckPath: /api/health
 
-  # ---- 前端（用 web 服务托管静态文件）----
   - type: web
     name: civil-interview-frontend
     runtime: node
-    buildCommand: cd frontend && npm ci && npm run build && echo "Built successfully"
+    buildCommand: cd frontend && npm ci && npm run build
     startCommand: cd frontend && npx serve -s dist -l 3000 --no-clipboard
     envVars:
       - key: VITE_API_URL
         fromService:
           name: civil-interview-backend
           type: web
-          property: url
+          property: hostport
