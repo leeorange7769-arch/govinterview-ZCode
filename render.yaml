@@ -1,5 +1,5 @@
 # ============================================
-# Render 一键部署配置（一个平台全搞定）
+# Render 一键部署配置
 # ============================================
 
 services:
@@ -31,18 +31,15 @@ services:
       sizeGB: 1
     healthCheckPath: /api/health
 
-  # ---- 前端 ----
-  - type: static
+  # ---- 前端（用 web 服务托管静态文件）----
+  - type: web
     name: civil-interview-frontend
-    buildCommand: cd frontend && npm ci && npm run build
-    staticPublishPath: frontend/dist
+    runtime: node
+    buildCommand: cd frontend && npm ci && npm run build && echo "Built successfully"
+    startCommand: cd frontend && npx serve -s dist -l 3000 --no-clipboard
     envVars:
       - key: VITE_API_URL
         fromService:
           name: civil-interview-backend
           type: web
           property: url
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
