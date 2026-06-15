@@ -22,7 +22,6 @@ app.use(helmet()); // 安全 HTTP 头
 app.use(
   cors({
     origin: config.clientUrl === '*' ? true : config.clientUrl,
-    credentials: true,
     credentials: true, // 允许携带 Cookie（用于 JWT 刷新等）
   }),
 );
