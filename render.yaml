@@ -1,9 +1,4 @@
-# ============================================
-# Render 一键部署配置
-# ============================================
-
 services:
-  # ---- 后端 API ----
   - type: web
     name: civil-interview-backend
     runtime: node
@@ -12,34 +7,33 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT      - 键: PORT
-        value: "4000"        值: "4000"
+      - key: PORT
+        value: "4000"
       - key: DATABASE_URL
         value: file:./data/dev.db
-      - key: JWT_SECRET      - 密钥: JWT_SECRET      - 密钥: JWT_SECRET      - 密钥: JWT_SECRET
-        generateValue: true        生成值: true
-      - key: JWT_EXPIRES_IN      - 密钥: JWT_EXPIRES_IN      - 密钥: JWT_EXPIRES_IN      - 密钥: JWT_EXPIRES_IN      - 密钥: JWT_EXPIRES_IN      - 密钥: JWT_EXPIRES_IN      - 密钥: JWT_EXPIRES_IN      - 密钥: JWT_EXPIRES_IN
-        value: 7d        值: 7d        值: 7d        值: 7d
-      - key: CLIENT_URL      - 键: CLIENT_URL
-        fromService:        来源服务:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CLIENT_URL
+        fromService:
           name: civil-interview-frontend
-          type: web          类型: web
-          property: url          属性: url          属性: url          属性: url          属性: url          属性: url          属性: url          属性: url
-    disk    磁盘:    磁盘:
-      name: sqlite-data      名称: sqlite-data      名称:       名称: sqlite-data      名称: sqlite-data      名称: sqlite-data      名称: sqlite-data
-      mountPath: /opt/render/project/src/backend/data      挂载路径: /opt/render/project/src/backend/data
-      sizeGB: 1      大小（GB）: 1
-    healthCheckPath: /api/health    健康检查路径: /api/health
+          type: web
+          property: url
+    disk:
+      name: sqlite-data
+      mountPath: /opt/render/project/src/backend/data
+      sizeGB: 1
+    healthCheckPath: /api/health
 
-  # ---- 前端 ----
-  - type: web  - 类型: web
-    name: civil-interview-frontend    名称: civil-interview-frontend
+  - type: web
+    name: civil-interview-frontend
     runtime: node
-    buildCommand: cd frontend && npm ci && npm run build    构建命令: cd frontend && npm ci && npm run build    构建命令: cd frontend && npm ci && npm run build    构建命令: cd frontend && npm ci && npm run build
-    startCommand: cd frontend && npx serve -s dist -l 3000    启动命令: cd frontend && npx serve -s dist -l 3000
+    buildCommand: cd frontend && npm ci && npm run build
+    startCommand: cd frontend && npx serve -s dist -l 3000
     envVars:
-      - key: VITE_API_URL      - 键: VITE_API_URL
-        fromService        来源服务:        来源服务:
-          name: civil-interview-backend          名称:           名称:           名称: civil-interview-backend          名称:           名称: civil-interview-backend          名称: civil-interview-backend
-          type: web          类型: web
-          property: url          属性:           属性: url          属性: url
+      - key: VITE_API_URL
+        fromService:
+          name: civil-interview-backend
+          type: web
+          property: url
