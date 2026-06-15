@@ -1,0 +1,48 @@
+# ============================================
+# Render 一键部署配置（一个平台全搞定）
+# ============================================
+
+services:
+  # ---- 后端 API ----
+  - type: web
+    name: civil-interview-backend
+    runtime: node
+    buildCommand: cd backend && npm ci && npx prisma generate && npx prisma migrate deploy && npx tsx prisma/seed.ts
+    startCommand: cd backend && npx tsx src/server.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: DATABASE_URL
+        value: file:./data/dev.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CLIENT_URL
+        fromService:
+          name: civil-interview-frontend
+          type: web
+          property: url
+    disk:
+      name: sqlite-data
+      mountPath: /opt/render/project/src/backend/data
+      sizeGB: 1
+    healthCheckPath: /api/health
+
+  # ---- 前端 ----
+  - type: static
+    name: civil-interview-frontend
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: civil-interview-backend
+          type: web
+          property: url
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

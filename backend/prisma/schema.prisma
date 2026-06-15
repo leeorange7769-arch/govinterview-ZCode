@@ -1,0 +1,219 @@
+// ========================================
+// Prisma 数据模型（SQLite 起步）
+// 切换 PostgreSQL：只需改 provider = "postgresql"
+// ========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== 用户表 ====================
+model User {
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  phone          String?   @unique
+  passwordHash   String
+
+  nickname       String?
+  avatarUrl      String?
+
+  // 角色：admin | user
+  role           String    @default("user")
+  // 状态：active | inactive | banned
+  status         String    @default("active")
+
+  emailVerified  Boolean   @default(false)
+  phoneVerified  Boolean   @default(false)
+
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // 关联
+  questions      Question[]
+  examRecords    ExamRecord[]
+  practiceRecords PracticeRecord[]
+  learningProgress LearningProgress[]
+  aiAnalyses     AiAnalysis[]
+
+  @@map("users")
+}
+
+// ==================== 题目表 ====================
+model Question {
+  id              Int       @id @default(autoincrement())
+
+  // 一级分类：综合分析 | 组织管理 | 应急应变 | 人际沟通 | 自我认知 | 时政热点
+  type            String
+  // 二级分类
+  subtype         String?
+
+  content         String
+
+  // 答题思路（JSON 数组字符串）
+  thinkingProcess String?
+  // 参考答案
+  modelAnswer     String?
+
+  // 评分要点：[{point, weight, description}, ...]（JSON 字符串）
+  scoringPoints   String?
+
+  difficulty      Int?      // 1-5
+  tags            String?   // JSON 数组字符串，如 '["乡村振兴","政策理解"]'
+
+  sourceYear      Int?      // 真题年份
+  sourceRegion    String?   // 真题地区
+
+  viewCount       Int       @default(0)
+  practiceCount   Int       @default(0)
+  avgScore        Float?
+
+  // 创建者（管理员）
+  createdBy       Int?
+  createdByUser   User?     @relation(fields: [createdBy], references: [id])
+
+  // 状态：draft | published | archived
+  status          String    @default("published")
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // 关联
+  examDetails     ExamDetail[]
+  practiceRecords PracticeRecord[]
+
+  @@index([type])
+  @@index([status])
+  @@index([difficulty])
+  @@map("questions")
+}
+
+// ==================== 考试记录表 ====================
+model ExamRecord {
+  id        Int       @id @default(autoincrement())
+
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+
+  // examType：smart | specialty | mock | custom
+  examType  String
+  title     String?
+
+  totalScore Float?
+  maxScore   Float?
+  timeSpent  Int?      // 总耗时（秒）
+
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  // 关联到试题详情
+  examDetails ExamDetail[]
+
+  @@index([userId])
+  @@index([examType])
+  @@map("exam_records")
+}
+
+// ==================== 考试题目详情表 ====================
+// 一次考试对应多道题目，存储每道题的作答结果
+model ExamDetail {
+  id          Int       @id @default(autoincrement())
+
+  examRecordId Int
+  examRecord   ExamRecord @relation(fields: [examRecordId], references: [id])
+
+  questionId   Int
+  question     Question  @relation(fields: [questionId], references: [id])
+
+  userAnswer   String?   // 用户作答文本
+  score        Float?    // 本题得分
+  maxScore     Float?    // 本题满分
+  timeSpent    Int?      // 本题耗时（秒）
+
+  @@index([examRecordId])
+  @@map("exam_details")
+}
+
+// ==================== 单题练习记录表 ====================
+model PracticeRecord {
+  id         Int       @id @default(autoincrement())
+
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id])
+
+  questionId Int
+  question   Question  @relation(fields: [questionId], references: [id])
+
+  userAnswer String?
+  aiScore    Float?    // AI 评分（0-10）
+  aiFeedback String?   // AI 点评（JSON 字符串）
+
+  timeSpent   Int?
+  isFavorite  Boolean   @default(false)
+  userNotes   String?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([questionId])
+  @@index([userId, createdAt])
+  @@map("practice_records")
+}
+
+// ==================== 学习进度表 ====================
+model LearningProgress {
+  id            Int       @id @default(autoincrement())
+
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id])
+
+  // 题型（一级分类名）
+  questionType  String
+
+  totalQuestions    Int   @default(0)
+  completedQuestions Int  @default(0)
+  correctCount      Int   @default(0)  // 正确次数（AI 评分 >= 6 视为正确）
+  totalScore        Float @default(0)
+
+  avgScore      Float?
+
+  streakDays    Int       @default(0)
+  lastPracticeDate DateTime?
+
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, questionType])
+  @@index([userId])
+  @@map("learning_progress")
+}
+
+// ==================== AI 分析记录表 ====================
+model AiAnalysis {
+  id             Int       @id @default(autoincrement())
+
+  userId         Int
+  user           User      @relation(fields: [userId], references: [id])
+
+  // 类型：weekly | manual | post_exam
+  analysisType   String
+
+  // 薄弱板块列表（JSON 字符串）
+  weaknessAreas  String?
+  // 优势板块列表（JSON 字符串）
+  strengthAreas  String?
+  // 推荐学习路径（JSON 字符串）
+  recommendedPath String?
+
+  overallAssessment String?
+
+  createdAt      DateTime  @default(now())
+
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@map("ai_analyses")
+}

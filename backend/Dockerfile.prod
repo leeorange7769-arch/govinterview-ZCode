@@ -1,0 +1,41 @@
+# ============================================
+# 后端生产 Dockerfile（PostgreSQL + TS 编译）
+# ============================================
+
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+COPY tsconfig.json ./
+COPY prisma ./prisma
+COPY src ./src
+
+# 用生产 Prisma schema 替换开发版
+RUN cp prisma/schema.prod.prisma prisma/schema.prisma
+
+# 生成客户端 + 编译
+RUN npx prisma generate && npx tsc -p tsconfig.json
+RUN npm prune --omit=dev
+
+# ---- 运行阶段 ----
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/package.json ./
+
+RUN apk add --no-cache curl
+
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+EXPOSE 4000
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["node", "dist/server.js"]

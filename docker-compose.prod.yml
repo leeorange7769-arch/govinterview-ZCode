@@ -1,0 +1,71 @@
+# ============================================
+# Docker Compose 生产部署
+# 包含：PostgreSQL + 后端 + 前端 Nginx + SSL
+# ============================================
+version: "3.9"
+
+services:
+  # ---- PostgreSQL 数据库 ----
+  db:
+    image: postgres:16-alpine
+    container_name: civil-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: civil_interview
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ChangeMe123!
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  # ---- 后端 API ----
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: civil-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.production
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - app-network
+
+  # ---- 前端 Nginx ----
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: civil-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./frontend/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app-network
+
+volumes:
+  pgdata:
+
+networks:
+  app-network:
+    driver: bridge

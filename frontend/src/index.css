@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: #ededeb;
+  }
+  body {
+    @apply bg-notion-bg text-notion-text antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+  .dark body {
+    @apply bg-slate-900 text-slate-200;
+  }
+  .dark * {
+    border-color: #334155;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-card shadow-card border border-notion-line p-6 transition-shadow duration-150;
+  }
+  .dark .card {
+    @apply bg-slate-800 border-slate-700 shadow-none;
+  }
+  .card:hover {
+    @apply shadow-card-hover;
+  }
+
+  .btn-primary {
+    @apply bg-primary-400 hover:bg-primary-500 text-white px-5 py-2.5 rounded-btn font-medium transition-colors duration-150 disabled:opacity-40;
+  }
+  .dark .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-400;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-notion-hover text-notion-text border border-notion-line px-5 py-2.5 rounded-btn font-medium transition-colors duration-150;
+  }
+  .dark .btn-secondary {
+    @apply bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-600;
+  }
+
+  .input-field {
+    @apply w-full rounded-btn border border-notion-line bg-notion-bg px-4 py-2.5 text-notion-text placeholder-notion-gray focus:border-primary-300 focus:ring-0 outline-none transition-colors;
+  }
+  .dark .input-field {
+    @apply bg-slate-800 border-slate-600 text-slate-200 placeholder-slate-500 focus:border-primary-500;
+  }
+
+  .tag {
+    @apply inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium;
+  }
+}
