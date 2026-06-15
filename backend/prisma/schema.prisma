@@ -1,6 +1,5 @@
 // ========================================
-// Prisma 数据模型（SQLite 起步）
-// 切换 PostgreSQL：只需改 provider = "postgresql"
+// Prisma 数据模型（CloudBase PostgreSQL）
 // ========================================
 
 generator client {
@@ -8,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
