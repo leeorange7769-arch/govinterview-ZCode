@@ -16,10 +16,7 @@ services:
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: CLIENT_URL
-        fromService:
-          name: civil-interview-frontend
-          type: web
-          property: url
+        value: "*"
     disk:
       name: sqlite-data
       mountPath: /opt/render/project/src/backend/data
@@ -30,10 +27,10 @@ services:
     name: civil-interview-frontend
     runtime: node
     buildCommand: cd frontend && npm ci && npm run build
-    startCommand: cd frontend && npx serve -s dist -l 3000
+    startCommand: cd frontend && npx serve -s dist -l 3000 --no-clipboard
     envVars:
       - key: VITE_API_URL
         fromService:
           name: civil-interview-backend
           type: web
-          property: url
+          property: hostport
